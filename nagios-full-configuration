@@ -1,0 +1,76 @@
+1. Install Prerequisites
+First, install the necessary development tools and web server components (LAMP stack basics).  
+
+Bash
+sudo yum update -y
+sudo yum groupinstall "Development Tools" -y
+sudo yum install -y httpd php php-cli gcc glibc glibc-common gd gd-devel net-snmp openssl-devel wget
+2. Create User and Group
+Nagios needs a dedicated user and a group for external commands.  
+
+Bash
+sudo useradd nagios
+sudo groupadd nagcmd
+sudo usermod -a -G nagcmd nagios
+sudo usermod -a -G nagcmd apache
+
+3. Download and Compile Nagios Core
+Navigate to /tmp to download the latest source code.
+
+Bash
+cd /tmp
+wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.14.tar.gz
+tar xzf nagios-4.4.14.tar.gz
+cd nagios-4.4.14
+
+# Compile
+sudo ./configure --with-command-group=nagcmd
+sudo make all
+sudo make install
+sudo make install-init
+sudo make install-commandmode
+sudo make install-config
+4. Configure the Web Interface
+Install the Apache configuration and set a password for the nagiosadmin user.
+
+Bash
+sudo make install-webconf
+sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+sudo systemctl restart httpd
+5. Install Nagios Plugins
+The engine won't do much without plugins to run the checks.  
+
+Bash
+cd /tmp
+wget https://nagios-plugins.org/download/nagios-plugins-2.4.6.tar.gz
+tar xzf nagios-plugins-2.4.6.tar.gz
+cd nagios-plugins-2.4.6
+
+sudo ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+sudo make
+sudo make install
+6. Final Steps: Verification & Firewall
+Check the configuration for errors and open the web ports.  
+
+Bash
+# Verify config
+sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+# Open firewall
+sudo firewall-cmd --permanent --add-port=80/tcp
+sudo firewall-cmd --reload
+
+# Start Nagios
+sudo systemctl enable nagios
+sudo systemctl start nagios
+
+
+Accessing the Dashboard
+Open your browser and go to:
+http://localhost/nagios (or your server's IP)
+
+Log in with:
+
+Username: nagiosadmin
+
+Password: (The one you set in Step 4)

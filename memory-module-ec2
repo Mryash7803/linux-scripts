@@ -1,0 +1,37 @@
+1. Open the NRPE config on your EC2:
+
+Bash
+sudo vi /usr/local/nagios/etc/nrpe.cfg
+Add a Command Alias:
+Scroll down to the "COMMAND DEFINITIONS" section. You will see examples like command[check_load]. Add this line below them:
+
+Bash
+command[check_mem]=/usr/local/nagios/libexec/check_mem.pl -f -w 20 -c 10
+(Note: Ensure the path to check_mem.pl matches where you installed it on the EC2 earlier.)
+
+Restart NRPE:
+
+Bash
+sudo systemctl restart nrpe
+2. Configure the CentOS "Master" (Local)
+Now you need to tell your Nagios dashboard to actually request that "check_mem" command from the EC2 instance.
+
+Open your remote host configuration:
+
+Bash
+sudo vi /usr/local/nagios/etc/objects/remote_host.cfg
+Add the Memory Service:
+Add this block below your "CPU Load" service:
+
+Code snippet
+define service {
+    use                     generic-service
+    host_name               AWS-EC2-Instance
+    service_description     Remote Memory Usage
+    check_command           check_nrpe!check_mem
+}
+Verify and Restart Nagios:
+
+Bash
+sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+sudo systemctl restart nagios

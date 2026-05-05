@@ -1,0 +1,67 @@
+2. Monitor a Custom Resource (Example: RAM Usage)
+Nagios doesn't monitor RAM by default in the basic config. Let’s add a check for your system memory to get a feel for the configuration files.
+
+Define the Command:
+Open the commands file:
+
+Bash
+sudo vi /usr/local/nagios/etc/objects/commands.cfg
+Add this to the end of the file:
+
+Code snippet
+    define command {
+        command_name    check_memory
+        command_line    $USER1$/check_mem.pl -f -w 20 -c 10
+    }
+    ```
+
+2.  **Add the Service to Localhost:**
+    Open the localhost config:
+    
+```bash
+    sudo vi /usr/local/nagios/etc/objects/localhost.cfg
+    ```
+    Add this service definition:
+    
+```nagios
+    define service {
+        use                     local-service
+        host_name               localhost
+        service_description     Memory Usage
+        check_command           check_memory
+    }
+    ```
+. Download the Missing Script
+Run these commands to download a standard memory monitoring script and place it in the correct folder:
+
+Bash
+cd /usr/local/nagios/libexec/
+sudo wget https://raw.githubusercontent.com/justintime/nagios-plugins/master/check_mem/check_mem.pl
+2. Set the Correct Permissions
+Nagios needs permission to execute this file, and it must be owned by the nagios user.
+
+Bash
+sudo chmod +x check_mem.pl
+sudo chown nagios:nagios check_mem.pl
+3. Test the Script Manually
+Before checking the web dashboard, verify the script actually works from the command line:
+
+Bash
+./check_mem.pl -f -w 20 -c 10
+
+
+
+
+
+3.  **Restart Nagios:**
+    
+```bash
+    sudo systemctl restart nagios
+    ```
+
+---
+
+### 3. Setting Up Alerts (Email Notifications)
+Nagios is only useful if it tells you when things break. To receive emails, you need to update your contact info:
+```bash
+sudo vi /usr/local/nagios/etc/objects/contacts.cfg
